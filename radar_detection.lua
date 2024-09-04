@@ -77,7 +77,21 @@ end
 --    setActive(num | bool)
 -- }
 
+-- local motor = getMotors()[1]
+-- if motor == nil then return end
+-- motor.setVelocity(10)
+-- motor.setStrength(10)
+-- motor.setActive(true)
+
 local function update_laser_motors()
+    local motor = getMotors()[1]
+
+    local rad_angle = radar.getAngle()
+    rad_angle = rad_angle + (math.pi / second)
+    if rad_angle > math.pi then
+        rad_angle = rad_angle - (math.pi * 2)
+    end
+    motor.setAngle(rad_angle)
 end
 
 
@@ -97,6 +111,13 @@ local function on_start()
     radar = getComponent("radar");
     radar.setHFov(math.pi)
     radar.setVFov(math.pi)
+
+    local motor = getMotors()[1]
+
+    motor.setVelocity(1000)
+    motor.setStrength(1000)
+    motor.setActive(true)
+
 
     print("started")
 end
