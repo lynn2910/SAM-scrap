@@ -18,10 +18,6 @@ local function on_start()
     print("started")
 end
 
-local function hello()
-end
-
-
 local function on_fail(err)
     out(false)
     print("failed : " .. string.match(err, "(.-)\n"))
@@ -33,14 +29,14 @@ local function on_stop()
 end
 
 local function on_tick(dt)
-    print("tick " .. total_ticks)
     Radar:update()
     Cache:update(Radar:getTargets())
 
     -- debug
     if total_ticks == 0 or total_ticks % (40 * 2) == 0 then -- each 2s
-        print(#Cache.players, "players")
-        print(#Cache.bodies, "bodies")
+        print("DEV REPORT " .. (total_ticks / (40 * 2)))
+        print(Cache.counts.players, "players")
+        print(Cache.counts.bodies, "bodies")
         print(#Radar:getTargets(), "targets")
     end
 end

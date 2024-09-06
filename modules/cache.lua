@@ -1,6 +1,7 @@
 local Cache = {
 	players = {},
-	bodies = {}
+	bodies = {},
+	counts = { players = 0, bodies = 0 }
 }
 
 function Cache:add(entity)
@@ -9,12 +10,14 @@ function Cache:add(entity)
 		    self.players[entity.object.id].object = entity.object
 		else
 			self.players[entity.object.id] = entity
+			self.counts.players = self.counts.players + 1
 		end
 	elseif entity.object.type == "body" then
 		if self.bodies[entity.object.id] ~= nil then
     		self.bodies[entity.object.id].object = entity.object
     	else
     	    self.bodies[entity.object.id] = entity
+			self.counts.bodies = self.counts.bodies + 1
     	end
 	end
 end
@@ -31,6 +34,7 @@ function Cache:update(targets)
 		if not seen[id] then
 			if player.not_seen > 200 then -- 5s
 				self.players[id] = nil
+				self.counts.players = self.counts.players - 1
 			else
 				self.players[id].not_seen = player.not_seen + 1
 			end
@@ -40,6 +44,7 @@ function Cache:update(targets)
 		if not seen[id] then
 			if body.not_seen > 200 then -- 5s
 				self.bodies[id] = nil
+				self.counts.bodies = self.counts.bodies - 1
 			else
 				self.bodies[id].not_seen = body.not_seen + 1
 			end
