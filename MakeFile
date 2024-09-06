@@ -1,25 +1,22 @@
 
-pp_out ?= "pp_main.lua"
-minify_out ?= "minified_main.lua"
+minify_out ?= "build/minified_main.lua"
+cc_out ?= "build/cc_main.lua"
 
-lua ?= lua
-minify_command := $(lua) "./lua-minify/minify.lua" minify $(pp_out)
+modules := radar cache
+
+minify_command := lua54.exe "./lua-minify/minify.lua" minify $(cc_out)
+combining_command := bun .\combine_lua_files.js -m main.lua -o $(cc_out) -n $(modules)
+
 
 clippath ?= "clip.exe"
-# PPDEFS := "ppdefs.lua"
 build ?= "SCI"
 verbose ?= true
-features ?= {}
 
 .DEFAULT_GOAL = clip
 
-clip: preprocess
+clip: minify
 	$(minify_command) | $(clippath)
-minify: preprocess
+minify: combining
 	$(minify_command) > $(minify_out)
-
-#ppdefs:
-#	echo return {BUILD=$(build), VERBOSE=$(verbose), FEATURES=$(features)}> $(PPDEFS)
-
-#preprocess: ppdefs
-#	$(lua) "./LuaPreprocess/preprocess-cl.lua" --meta -o main.lua $(pp_out)
+combining:
+	$(combining_command)
