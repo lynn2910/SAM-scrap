@@ -1,0 +1,3 @@
+[submodule "lua-minify"]
+	path = lua-minify
+	url = git@github.com:stravant/lua-minify.git

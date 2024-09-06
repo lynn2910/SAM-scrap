@@ -59,7 +59,7 @@ local function update_radar_angle()
     -- The radar angle should be either 0° or 180° (pi)
     if radar.getAngle() ~= math.pi then
         radar.setAngle(math.pi)
-    else 
+    else
         radar.setAngle(0)
     end
 end
@@ -83,15 +83,12 @@ end
 -- motor.setStrength(10)
 -- motor.setActive(true)
 
+local motor_deg_rotation = 0
 local function update_laser_motors()
     local motor = getMotors()[1]
 
-    local rad_angle = radar.getAngle()
-    rad_angle = rad_angle + (math.pi / second)
-    if rad_angle > math.pi then
-        rad_angle = rad_angle - (math.pi * 2)
-    end
-    motor.setAngle(rad_angle)
+    motor_deg_rotation = motor_deg_rotation + 10;
+    motor.setAngle(math.rad(motor_deg_rotation))
 end
 
 
