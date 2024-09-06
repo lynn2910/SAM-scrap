@@ -5,7 +5,6 @@
 ]]
 
 
-
 local Radar = {
 	radar = {},
     -- The angle in degrees, from 0° to 360°, and loop back when overflowing
@@ -13,10 +12,12 @@ local Radar = {
     -- The FOV of the camera on the vertical and horizontal axis
     fov = { h = math.pi, v = math.pi },
     rotation_speed = 10,
+
+    temp_targets = {},
 }
 
 function Radar:getTargets()
-	return self.radar.getTargets()
+	return self.temp_targets;
 end
 
 function Radar:register()
@@ -25,11 +26,13 @@ function Radar:register()
 end
 
 function Radar:update(opt)
+    self.temp_targets = self.radar.getTargets()
+
     -- Update the andle and loop back when overflowing
     if opt ~= nil then
         if opt.update_system then
-    	    if radar.getHFov() ~= self.fov.h then radar.setHFov(self.fov.h) end
-            if radar.getVFov() ~= self.fov.v then radar.setVFov(self.fov.v) end
+    	    if self.radar.getHFov() ~= self.fov.h then self.radar.setHFov(self.fov.h) end
+            if self.radar.getVFov() ~= self.fov.v then self.radar.setVFov(self.fov.v) end
         end
 
         if opt.rotate then
@@ -38,5 +41,5 @@ function Radar:update(opt)
 		end
     end
 
-	radar.setAngle(math.rad(self.angle))
+	self.radar.setAngle(math.rad(self.angle))
 end

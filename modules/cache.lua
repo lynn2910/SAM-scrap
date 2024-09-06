@@ -22,7 +22,7 @@ end
 function Cache:update(targets)
 	local seen = {}
 	-- add targets
-	for target in targets do
+	for _, target in pairs(targets) do
 	    Cache:add(create_entity(target))
 	end
 

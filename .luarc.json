@@ -1,5 +1,17 @@
 {
     "diagnostics.disable": [
         "lowercase-global"
+    ],
+    "diagnostics.globals": [
+        "callback_error",
+        "callback_loop",
+        "reboot",
+        "_endtick",
+        "getDeltaTimeTps",
+        "out",
+        "Radar",
+        "getComponent",
+        "radar",
+        "Cache"
     ]
 }
