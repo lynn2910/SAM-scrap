@@ -14,9 +14,11 @@ local Radar = {
     angle = 0,
     -- The FOV of the camera on the vertical and horizontal axis, in radians
     fov = { h = math.rad(10), v = math.pi },
-    rotation_speed = 10,
+    rotation_speed = 360 / (40 * 2),
 
     temp_targets = {},
+
+    targets_hangles = {}
 }
 
 function Radar:getTargets()
@@ -48,6 +50,8 @@ end
 function Radar:update(opt)
     self.temp_targets = self.radar.getTargets()
 
+    Radar:registerTargetsPositions()
+
     -- Update the andle and loop back when overflowing
     if opt ~= nil then
         if opt.update_system then
@@ -57,9 +61,29 @@ function Radar:update(opt)
 
         if opt.rotate then
             self.angle = self.angle + self.rotation_speed
-			if self.angle > 360 then self.angle = self.angle - 360 end
+			if self.angle > 360 then
+                self.angle = self.angle - 360
+                -- TODO need to clear the targets_hangles
+             end
             
 	        self.radar.setAngle(math.rad(self.angle))
 		end
     end
+end
+
+function Radar:registerTargetsPositions()
+    for _, target in pairs(self:getTargets()) do
+        local id = target[1]
+        -- if the target isn't registered, we'll clear it
+        if self.targets_hangles[id] == nil then
+            self.targets_hangles[id] = {}
+        end
+
+        -- insert the hangle
+        table.insert(self.targets_hangles[id], math.deg(target[2]))
+    end
+end
+
+function Radar:getTargetHAngles(id)
+    return self.targets_hangles[id] or {}
 end

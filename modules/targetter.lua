@@ -111,7 +111,22 @@ function Targetter:updateMotor()
     if not self.lock or self.target == nil then return end
 
     -- Update horizontal motor
-    local diff_angle = (Turret.hangle - self.target.object.hangle)
+    local diff_angle_sum = 0 --Turret.hangle - self.target.object.hangle
+    local i = 0
+    local positions = Radar:getTargetHAngles(self.target.object.id);
+    
+    if #positions == 0 then return end
+
+    for _, hangle in ipairs(positions) do
+        i = i + 1
+        diff_angle_sum = diff_angle_sum + (Turret.hangle - hangle)
+    end
+
+    local diff_angle = diff_angle_sum / i;
+
+    -- if i == 0 or if the diff_angle is infinite, well, something went really wrong.
+    if math.abs(diff_angle) == math.huge or i == 0 then return end
+
 
     if diff_angle > 180 then diff_angle = diff_angle - 360 end
     if diff_angle < -180 then diff_angle = diff_angle + 360 end
@@ -122,7 +137,6 @@ function Targetter:updateMotor()
 
 
     -- Move the turret by the step size towards the target
-    -- TODO step is too big!
     if diff_angle > 0 then
         diff_angle = math.min(diff_angle, step_size)
     else
@@ -130,10 +144,9 @@ function Targetter:updateMotor()
     end
 
     if math.abs(diff_angle) > 0.1 then
-        print("angle_diff = " .. math.abs(diff_angle))
         Turret:move_hangle(math.max(diff_angle, -step_size))
     end
-  end
+end
 
 -- local motor = getMotors()[1]
 -- if motor == nil then return end
