@@ -52,7 +52,7 @@ find_modules();
 
 let buff = "";
 
-modules.forEach((m) => {
+modules.reverse().forEach((m) => {
     buff += readFileSync(m.path, "utf-8")
     buff += "\n";
 });

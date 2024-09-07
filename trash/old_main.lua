@@ -1,6 +1,6 @@
 NAME = "sarisse"
 CODE_ID = "12a67-9"
-VERSION = "0.0.2"
+VERSION = "0.0.1.23.6"
 
 local total_ticks = 0
 
@@ -17,8 +17,12 @@ end
 local function on_start()
     out(true)   -- set the computer as on
 
+    -- update registries
+    setreg("laser", false)
+
+    -- Initialize modules
     Radar:register()
-    HoloDisplay:register()
+    Targetter:register({ turret = true })
 
     print("Started")
     print(NAME .. " (" .. CODE_ID .. ") v" .. VERSION .. ")")
@@ -30,22 +34,29 @@ local function on_fail(err)
 end
 
 local function on_stop()
-    if HoloDisplay.holo ~= nil then
-        HoloDisplay.holo.clear()
-        HoloDisplay.holo.flush()
-    end
-
     out(false)
+
+    setreg("laser", false)
+
     print("stopped")
 end
 
 local function on_tick(dt)
-    Radar:update()
-    HoloDisplay:update(Radar:getTargets())
+    Radar:update({ rotate = true })
+    Cache:update(Radar:getTargets())
+    Targetter:update()
 
-    if total_ticks % (40 * 2) == 0 then
-        print("DEV REPORT")
-        print("radar count = " .. Radar.target_count)
+    -- debug
+    if total_ticks == 1 or total_ticks % (40 * 5) == 0 then -- each 5s
+        print("DEV REPORT " .. (total_ticks / (40 * 5)))
+        print(Cache.counts.players, "players")
+        print(Cache.counts.bodies, "bodies")
+        print(Radar:getCycleTargetsCount(), "targets")
+
+        if Targetter.target ~= nil then
+            print("Locked on " .. Targetter.target.object.id .. " m" .. math.floor(Targetter.target.mass))
+            print("Distance = " .. Targetter.target.object.distance)
+        end
     end
 end
 

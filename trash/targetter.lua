@@ -11,7 +11,7 @@ local Turret = {
     rotation_strength = 10,
     rotation_velocity = 10,
 
-    min_mass_accepted = 10,
+    min_mass_accepted = 2,
     old_diff_hangle = 0
 }
 
@@ -87,7 +87,6 @@ function Targetter:update()
         end
     end
 
-    local changed = false;
     if bigger_target_id ~= nil and (self.target == nil or bigger_target_id ~= self.target.object.id) then
         print("New target")
         print("ID      ", bigger_target_id)
@@ -95,19 +94,26 @@ function Targetter:update()
         print("Distance", Cache.bodies[bigger_target_id].object.distance)
         self.target = Cache.bodies[bigger_target_id]
         self.lock = true
-        changed = true
     elseif self.target ~= nil then
         -- update target
         self.target = Cache.bodies[self.target.object.id]
-        change = true
     end
 
     -- Update the laser motors every update
-    if changed or (self.target ~= nil and self.target.object.hangle ~= Turret.hangle) then Targetter:updateMotor() end
+    Targetter:updateMotor()
 end
 
-
+-- Update all motors and the laser
+-- Equation for the motors speed: https://www.geogebra.org/graphing/tryvrsku
 function Targetter:updateMotor()
+    Targetter:updateHMotor()
+    -- Targetter:updateVMotor()
+
+    -- update laser
+    setreg("laser", self.lock)
+end
+
+function Targetter:updateHMotor()
     if not self.lock or self.target == nil then return end
 
     -- Update horizontal motor
@@ -148,23 +154,38 @@ function Targetter:updateMotor()
     end
 end
 
--- local motor = getMotors()[1]
--- if motor == nil then return end
--- motor.setVelocity(10)
--- motor.setStrength(10)
--- motor.setActive(true)
 
---[[
+function Targetter:updateVMotor()
+    if not self.lock or self.target == nil then return end
 
-data = {
-getVelocity(),
-setVelocity(num),
-getStrength(),
-setStrength(num),
-getAngle(),
-setAngle(num | nil),
-isActive(),
-setActive(num | bool)
-}
+    -- Update vertical motor
+    local diff_angle_sum = 0
+    local i = 0
+    local positions = Radar:getTargetVAngles(self.target.object.id);
 
-]]
+    if #positions == 0 then return end
+
+    for _, vangle in ipairs(positions) do
+        i = i + 1
+        diff_angle_sum = diff_angle_sum + (Turret.vangle - vangle)
+    end
+
+    local diff_angle = diff_angle_sum / i;
+
+    if math.abs(diff_angle) == math.huge or i == 0 then return end
+
+    if diff_angle > 180 then diff_angle = diff_angle - 360 end
+    if diff_angle < -180 then diff_angle = diff_angle + 360 end
+
+    local step_size = 100 * math.exp(-math.abs(diff_angle) / 50) - 2.7323722447292558
+
+    if diff_angle > 0 then
+        diff_angle = math.min(diff_angle, step_size)
+    else
+        diff_angle = math.max(diff_angle, -step_size)
+    end
+
+    if math.abs(diff_angle) > 0.1 then
+        Turret:move_vangle(-math.max(diff_angle, -step_size))
+    end
+end

@@ -1,89 +1,78 @@
---[[
-
-    Documentation: https://github.com/igorkll/SComputers_docs/blob/main/SComputers/Components/gps.md
-
-]]
-
-utils = require("utils")
-gps = getComponents("gps")[1]
-
-
 local Radar = {
-	radar = {},
-    -- The angle in degrees, from 0° to 360°, and loop back when overflowing
+    radar = {},
+
+    targets = {},
+    last_change = 0,
+    target_count = 0,
+    
     angle = 0,
-    -- The FOV of the camera on the vertical and horizontal axis, in radians
-    fov = { h = math.rad(10), v = math.pi },
-    rotation_speed = 360 / (40 * 2),
-
-    temp_targets = {},
-
-    targets_hangles = {}
+    fovs = { h = 10, v = 180 }
 }
 
-function Radar:getTargets()
-	return self.temp_targets;
-end
-
 function Radar:register()
-	self.radar = getComponent("radar")
-	self:update({ rotate = false, update_system = true })
+    self.radar = getComponent("radar")
 
     print("Radar initiated")
-
-    print("a")
-    print(gps)
-    local gpsdata = gps.getSelfGpsData()
-    print("b")
-
-    print("------------------------------------------------")
-    print("position-self", utils.roundTo(gpsdata.position.x, 1), utils.roundTo(gpsdata.position.y, 1), utils.roundTo(gpsdata.position.z, 1))
-    print("rotation-self", utils.roundTo(gpsdata.rotation.x, 1), utils.roundTo(gpsdata.rotation.y, 1), utils.roundTo(gpsdata.rotation.z, 1), utils.roundTo(gpsdata.rotation.w, 1))
-    print("rotation-euler-self", utils.roundTo(gpsdata.rotationEuler.x, 1), utils.roundTo(gpsdata.rotationEuler.y, 1), utils.roundTo(gpsdata.rotationEuler.z, 1))
-    for i, v in ipairs(gps.getTagsGpsData(0)) do
-        print("position-tag:" .. tostring(i), utils.roundTo(v.position.x, 1), utils.roundTo(v.position.y, 1), utils.roundTo(v.position.z, 1))
-        print("rotation-tag:" .. tostring(i), utils.roundTo(v.rotation.x, 1), utils.roundTo(v.rotation.y, 1), utils.roundTo(v.rotation.z, 1), utils.roundTo(v.rotation.w, 1))
-        print("rotation-euler-tag:" .. tostring(i), utils.roundTo(gpsdata.rotationEuler.x, 1), utils.roundTo(gpsdata.rotationEuler.y, 1), utils.roundTo(gpsdata.rotationEuler.z, 1))
-    end
 end
 
-function Radar:update(opt)
-    self.temp_targets = self.radar.getTargets()
+-- Update the hardware
+function Radar:updateComponent()
+    self.radar.setAngle(math.rad(self.angle))
 
-    Radar:registerTargetsPositions()
+    self.radar.setHFov(math.rad(self.fovs.h))
+    self.radar.setVFov(math.rad(self.fovs.v))
+end
 
-    -- Update the andle and loop back when overflowing
-    if opt ~= nil then
-        if opt.update_system then
-    	    if self.radar.getHFov() ~= self.fov.h then self.radar.setHFov(self.fov.h) end
-            if self.radar.getVFov() ~= self.fov.v then self.radar.setVFov(self.fov.v) end
+function Radar:update()
+    local changed = false
+    local now = os.time()
+
+    for _, target in pairs(self.radar.getTargets()) do
+        local entity = create_entity(target)
+
+        if self.targets[entity.id] == nil then
+            self.targets[entity.id] = entity
+            self.target_count = self.target_count + 1
+            changed = true
         end
 
-        if opt.rotate then
-            self.angle = self.angle + self.rotation_speed
-			if self.angle > 360 then
-                self.angle = self.angle - 360
-                -- TODO need to clear the targets_hangles
-             end
-            
-	        self.radar.setAngle(math.rad(self.angle))
-		end
+        self.targets[entity.id].radar_angle = self.angle
+        self.targets[entity.id].seen = 0
     end
-end
 
-function Radar:registerTargetsPositions()
-    for _, target in pairs(self:getTargets()) do
-        local id = target[1]
-        -- if the target isn't registered, we'll clear it
-        if self.targets_hangles[id] == nil then
-            self.targets_hangles[id] = {}
+    for id, entity in pairs(self.targets) do
+        if entity.seen ~= now then
+            entity.seen = entity.seen + 1
         end
 
-        -- insert the hangle
-        table.insert(self.targets_hangles[id], math.deg(target[2]))
+        if entity.seen >= (40 * 5) then
+            self.targets[id] = nil
+            self.target_count = self.target_count - 1
+        end
     end
+
+    -- clear
+
+    if changed then last_change = now end
+
+    -- Rotate radar
+    self.angle = self.angle + 9
+    if self.angle > 360 then self.angle = self.angle - 360 end
+
+    Radar:updateComponent()
 end
 
-function Radar:getTargetHAngles(id)
-    return self.targets_hangles[id] or {}
+function Radar:getTargets()
+    return self.targets
+end
+
+function create_entity(infos)
+	return {
+        id=infos[1],
+        radar_angle = 0,
+		-- force depends on mass and distance
+		object = {hangle = math.deg(infos[2]), vangle = math.deg(infos[3]), distance = infos[4], force = infos[5], type = infos[6]},
+		not_seen = 0,
+		mass = 0
+	}
 end

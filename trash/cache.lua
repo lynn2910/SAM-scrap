@@ -1,13 +1,15 @@
 local Cache = {
 	players = {},
 	bodies = {},
-	counts = { players = 0, bodies = 0 }
+	counts = { players = 0, bodies = 0 },
+	cleaning_timeout = 40 * 5 -- 5s
 }
 
 function Cache:add(entity)
 	if entity.object.type == "character" then
 		if self.players[entity.object.id] ~= nil then
 		    self.players[entity.object.id].object = entity.object
+			self.players[entity.object.id].not_seen = 0
 		else
 			self.players[entity.object.id] = entity
 			self.counts.players = self.counts.players + 1
@@ -15,6 +17,7 @@ function Cache:add(entity)
 	elseif entity.object.type == "body" then
 		if self.bodies[entity.object.id] ~= nil then
     		self.bodies[entity.object.id].object = entity.object
+			self.bodies[entity.object.id].not_seen = 0
     	else
     	    self.bodies[entity.object.id] = entity
 			self.counts.bodies = self.counts.bodies + 1
@@ -34,11 +37,13 @@ function Cache:update(targets)
 	end
 
 	-- Cache cleaner
+	local i = 0
 	for id, player in pairs(self.players) do
 		if not seen[id] then
-			if player.not_seen > 200 then -- 5s
+			if player.not_seen > self.cleaning_timeout then -- 5s
 				self.players[id] = nil
 				self.counts.players = self.counts.players - 1
+				i = i + 1
 			else
 				self.players[id].not_seen = player.not_seen + 1
 			end
@@ -46,13 +51,18 @@ function Cache:update(targets)
 	end
 	for id, body in pairs(self.bodies) do
 		if not seen[id] then
-			if body.not_seen > 200 then -- 5s
+			if body.not_seen > self.cleaning_timeout then -- 5s
 				self.bodies[id] = nil
 				self.counts.bodies = self.counts.bodies - 1
+				i = i + 1
 			else
 				self.bodies[id].not_seen = body.not_seen + 1
 			end
 		end
+	end
+
+	if i > 0 then
+		print(i .. " entities removed from cache")
 	end
 end
 
