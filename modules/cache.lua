@@ -26,7 +26,13 @@ function Cache:update(targets)
 	local seen = {}
 	-- add targets
 	for _, target in pairs(targets) do
-	    Cache:add(create_entity(target))
+		local entity = create_entity(target)
+		-- update useful informations
+		entity.mass = get_mass_from_force(entity.object.force, entity.object.distance)
+		entity.last_radar_angle = Radar.angle
+
+	    Cache:add(entity)
+
 	end
 
 	-- Cache cleaner
@@ -55,8 +61,14 @@ end
 function create_entity(infos)
 	return {
 		-- force depends on mass and distance
-		object = {id=infos[1], hangle = infos[2], vangle = infos[3], distance = infos[4], force = infos[5], type = infos[6]},
+		object = {id=infos[1], hangle = math.deg(infos[2]), vangle = math.deg(infos[3]), distance = infos[4], force = infos[5], type = infos[6]},
 		dir_vector = sm.vec3.new(0, 0, 0),
-		not_seen = 0
+		not_seen = 0,
+		mass = 0,
+		last_radar_angle = 0
 	}
+end
+
+function get_mass_from_force(signal_force, distance)
+	return signal_force / distance
 end

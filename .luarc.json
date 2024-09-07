@@ -12,6 +12,8 @@
         "Radar",
         "getComponent",
         "radar",
-        "Cache"
+        "Cache",
+        "Targetter",
+        "getComponents"
     ]
 }
