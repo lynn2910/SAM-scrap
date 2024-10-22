@@ -37,8 +37,9 @@ function find_modules(path = "modules"){
         if (stat.isDirectory()) {
             find_modules(`${path}/${p}`);
         } else if (stat.isFile() && p.endsWith(".lua")) {
-            let name = p.replace(/\.lua$/, "");
-            if (name) {
+            let name = (path !== "modules" ? path.replace(/^modules\//, "") + "/" : '') + p.replace(/\.lua$/, "");
+            console.log(name)
+            if (name && args.modules.includes(name)) {
                 modules.push({
                     name,
                     path: `${path}/${p}`

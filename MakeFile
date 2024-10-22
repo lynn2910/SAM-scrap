@@ -1,12 +1,11 @@
-
 minify_out ?= "build/minified_main.lua"
 cc_out ?= "build/cc_main.lua"
 
-modules := radar cache targetter holo
+modules ?=  # radar cache targetter holo
+main_file ?= "main.lua"
 
 minify_command := lua54.exe "./lua-minify/minify.lua" minify $(cc_out)
-combining_command := bun .\combine_lua_files.js -m main.lua -o $(cc_out) -n $(modules)
-
+combining_command := bun .\combine_lua_files.js -m $(main_file) -o $(cc_out) -n $(modules)
 
 clippath ?= "clip.exe"
 build ?= "SCI"
